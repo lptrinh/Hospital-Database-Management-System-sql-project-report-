@@ -280,3 +280,490 @@ DOCTOR và NURSE vẫn lưu lại DepCode của phòng ban đã bị xóa này �
 Nếu phòng ban được cập nhật, các bác sĩ và y tá sẽ được cập nhật DepCode tương ứng – **ON
 UPDATE CASCADE**.
 
+### Khởi tạo bảng INPATIENT
+```
+CREATE TABLE INPATIENT
+(
+PChar CHAR(2),
+PNumber DECIMAL(9, 0) ZEROFILL,
+PFiName VARCHAR(15) NOT NULL,
+PLName VARCHAR(15) NOT NULL,
+PGender CHAR,
+PDoB DATE,
+PAddress VARCHAR(50),
+PPhone DECIMAL(10, 0) ZEROFILL,
+IPAdDate DATE,
+IPDisDate DATE,
+IPSickroom CHAR(3),
+IPFee NUMERIC(15,4),
+IPDiag VARCHAR(50),
+NurseCode DECIMAL(9, 0) ZEROFILL NOT NULL,
+PRIMARY KEY(Pchar,PNumber),
+CONSTRAINT fk_inp_nurse_nursecode FOREIGN KEY(NurseCode)
+REFERENCES NURSE(ECode)
+ON DELETE NO ACTION,
+CONSTRAINT inpchar_check CHECK (PChar = 'IP'),
+CONSTRAINT inp_check_gender CHECK (PGender IN ('M', 'F'))
+);
+```
+Trong đó:
+* PChar là phần ký tự chữ trong mã bệnh nhân nội trú, chỉ nhận giá trị “IP”. Do đó, đây là
+trường kiểu **CHAR(2)** và ràng buộc **inpchar_check** đảm bảo rằng chỉ có giá trị “IP” là hợp
+lệ cho trường này.
+* PNumber là phần ký số trong mã bệnh nhân nội trú, gồm một chuỗi 9 ký số như
+“000000001”. Do đó, trường này sẽ nhận kiểu **DECIMAL(9, 0) ZEROFILL**.
+* PFiName là tên của bệnh nhân, là một chuỗi bất kỳ với tối đa 15 ký tự. Lựa chọn kiểu **VARCHAR(15)** và yêu cầu tên bệnh nhân phải **NOT NULL**.
+* PLName là họ của bệnh nhân, cũng là một chuỗi bất kỳ với tối đa 15 ký tự. Lựa chọn kiểu **VARCHAR(15)** và yêu cầu họ của bệnh nhân phải **NOT NULL**.
+* PGender là giới tính của bệnh nhân. Tương tự như EGender thuộc bảng DOCTOR và
+NURSE, lựa chọn kiểu **CHAR** với 2 giá trị hợp lệ là **M** và **F**. Ràng buộc này được
+áp dụng bằng **CONSTRAINT inp_check_gender**.
+* PDoB là ngày sinh của bệnh nhân, kiểu **DATE**.
+* PAddress là địa chỉ của bệnh nhân, là một chuỗi bất kỳ tối đa 50 ký tự. Lựa
+chọn kiểu **VARCHAR(50)**.
+* PPhone là điện thoại của bệnh nhân. Tương tự với Phone của bảng DOCTOR và NURSE,
+lựa chọn kiểu **DECIMAL(10, 0) ZEROFILL**.
+* PAdDate là ngày bệnh nhân nhập viện. Kiểu dữ liệu lựa chọn là
+*DATE**.
+* PDisDate là ngày bệnh nhân xuất viện. Kiểu dữ liệu lựa chọn là
+**DATE**.
+* IPRoom là phòng bệnh của bệnh nhân. Đó là một chuỗi bất kỳ giới
+hạn 3 ký tự, nên kiểu dữ liệu được chọn là **CHAR(3)**.
+* IPFee là phí nhập viện của bệnh nhân. Vì là tiền nên chọn kiểu dữ liệu số với
+nhiều nhất 15 ký số và 4 ký số sau dấu thập phân – **NUMERIC(15, 4)**.
+* IPDiag là chẩn đoán bệnh của bệnh nhân. Cho đây là một chuỗi bất kỳ với giới
+hạn 50 ký tự - **VARCHAR(50)**.
+* NurseCode là mã nhân viên của y tá chăm sóc bệnh nhân nội trú. Đây là một khóa ngoại
+tham khảo đến ECode trong bảng NURSE, được áp dụng bằng ràng buộc
+**fk_inp_nurse_nursecode**. Khi ECode tương ứng trong bảng NURSE bị xóa, ta vẫn giữ lại
+NurseCode trong bản INPATIENT – **ON DELETE NO ACTION**.
+
+### Thêm dữ liệu vào bảng INPATIENT
+```
+INSERT INTO INPATIENT
+VALUES ('IP', 0, 'Jack', 'Napier', 'M', '1939-01-01','Gotham', 0919987654, '2020-
+05-19', NULL, '001', 1000, 'Psychosis', 6);
+INSERT INTO INPATIENT
+VALUES ('IP', 1, 'Harlene', 'Quinzel', 'F', '1995-03-01','Gotham', 0919985555,
+'2022-10-31', NULL, '001', 900, 'Psychosis', 6);
+INSERT INTO INPATIENT
+VALUES ('IP', 2, 'Jane', 'Doe', 'F', '2001-12-23', 'Missouri', 0909090909, '2022-
+11-01', '2022-11-27', '002', 2000, 'Covid', 9);
+INSERT INTO INPATIENT
+VALUES ('IP', 3, 'Van Nam', 'Nguyen', 'M', '2001-07-11', 'Long Xuyen',
+0109090909, '2019-01-01', '200-11-30', '006', 2050, 'Cancer', 9);
+```
+### Khởi tạo bảng OUTPATIENT
+```
+CREATE TABLE OUTPATIENT
+(
+PChar CHAR(2),
+PNumber DECIMAL(9, 0) ZEROFILL,
+PFiName VARCHAR(15) NOT NULL,
+PLName VARCHAR(15) NOT NULL,
+PGender CHAR,
+PDoB DATE,
+PAddress VARCHAR(50),
+PPhone DECIMAL(10, 0) ZEROFILL,
+DocCode DECIMAL(9, 0) ZEROFILL NOT NULL,
+PRIMARY KEY(Pchar,PNumber),
+CONSTRAINT fk_outp_doc_doccode FOREIGN KEY(DocCode)
+REFERENCES DOCTOR(ECode)
+ON DELETE NO ACTION,
+CONSTRAINT outp_check_gender CHECK (PGender IN ('M', 'F')),
+CONSTRAINT outpchar_check CHECK (PChar = 'OP')
+);
+```
+Trong đó:
+* PChar là phần ký tự chữ trong mã bệnh nhân ngoại trú, chỉ nhận giá trị “OP”. Do đó, đây
+là trường kiểu **CHAR(2)** và ràng buộc **outpchar_check** đảm bảo rằng chỉ có giá trị “OP” là
+hợp lệ cho trường này.
+* PNumber là phần ký số trong mã bệnh nhân ngoại trú, gồm một chuỗi 9 ký số như
+“000000001”. Do đó, trường này sẽ nhận kiểu **DECIMAL(9, 0) ZEROFILL**.
+* PFiName là tên của bệnh nhân, là một chuỗi bất kỳ với tối đa 15 ký tự. Lựa chọn kiểu **VARCHAR(15)** và yêu cầu tên bệnh nhân phải **NOT NULL**.
+* PLName là họ của bệnh nhân, cũng là một chuỗi bất kỳ với tối đa 15 ký tự. Chọn kiểu **VARCHAR(15)** và yêu cầu họ của bệnh nhân phải **NOT NULL**.
+* PGender là giới tính của bệnh nhân. Tương tự như EGender thuộc bảng DOCTOR và
+NURSE, lựa chọn kiểu CHAR với 2 giá trị hợp lệ là **M** và **F**. Ràng buộc này được
+áp dụng bằng **CONSTRAINT outp_check_gender**.
+* PDoB là ngày sinh của bệnh nhân, kiểu **DATE**.
+* PAddress là địa chỉ của bệnh nhân, là một chuỗi bất kỳ tối đa 50 ký tự. Chọn kiểu **VARCHAR(50)**.
+* PPhone là điện thoại của bệnh nhân. Tương tự với Phone của bảng DOCTOR và NURSE, lựa chọn kiểu **DECIMAL(10, 0) ZEROFILL**.
+* DocCode là mã nhân viên của bác sĩ khám bệnh cho bệnh nhân ngoại trú. Đây là một
+khóa ngoại tham khảo đến ECode trong bảng DOCTOR, được áp dụng bằng ràng buộc
+**fk_outp_doc_doccode**. Khi ECode tương ứng trong bảng DOCTOR bị xóa, ta vẫn giữ lại
+DocCode trong bản OUTPATIENT – **ON DELETE NO ACTION**.
+### Thêm dữ liệu vào bảng OUTPATIENT
+```
+INSERT INTO OUTPATIENT
+VALUES ('OP', 0, 'Bruce', 'Wayne', 'M', '1991-07-04', 'Gotham', 0919193911, 0);
+INSERT INTO OUTPATIENT
+VALUES ('OP', 1, 'Selina', 'Kyle', 'F', '1993-03-14', 'Brudhaven', 0909094444,
+4);
+INSERT INTO OUTPATIENT
+VALUES ('OP', 2, 'Richard', 'Grayson', 'M', '2001-03-20', 'Brudhaven',
+0888123456, 0);
+INSERT INTO OUTPATIENT
+VALUES ('OP', 3, 'Oliver', 'Queen', 'M', '1985-05-16', 'Starling', 0444444444,
+4);
+```
+### Khởi tạo bảng MEDICATION
+```
+CREATE TABLE MEDICATION
+(
+MCode CHAR(9) PRIMARY KEY,
+MName VARCHAR(20) NOT NULL UNIQUE,
+MPrice NUMERIC(15,4),
+MExDate DATE,
+MExpired BIT
+);
+```
+
+Trong đó:
+* MCode là mã định danh của loại thuốc, là một chuỗi bất kỳ 9 ký tự. Lựa
+chọn kiểu dữ liệu là **CHAR(9)**. Đây cũng là **PRIMARY KEY** của bảng.
+* MName là tên của loại thuốc, là một chuỗi bất kỳ tối đa 20 ký tự. Chọn
+kiểu dữ liệu **VARCHAR(20)**. Đồng thời, tên thuốc phải **NOT NULL** và là độc nhất trong
+bảng **UNIQUE**.
+* MPrice là giá thuốc, vì là tiền nên chọn kiểu dữ liệu số với 15 ký số trước dấu
+phẩy và 4 ký số sau dấu phẩy – **NUMERIC(15, 4)**.
+* MExDate là ngày nhập thuốc, do đó đây sẽ là kiểu **DATE**.
+* MExpired cho ta biết thuốc đã hết hạn sử dụng chưa. Do đó đây sẽ là giá trị **BIT** với 0 là
+chưa và 1 là rồi.
+
+### Tạo Trigger cho bảng MEDICATION
+Chúng ta cần tạo một Trigger chạy hằng ngày nhằm chỉnh MExpired thành 1 nếu MExDate
+vượt quá ngày hôm nay.<br />
+CREATE EVENT STATEMENT
+```
+CREATE
+    [DEFINER = user]
+    EVENT
+    [IF NOT EXISTS]
+    event_name
+    ON SCHEDULE schedule
+    [ON COMPLETION [NOT] PRESERVE]
+    [ENABLE | DISABLE | DISABLE ON SLAVE]
+    [COMMENT 'string']
+    DO event_body;
+
+schedule: {
+    AT timestamp [+ INTERVAL interval] ...
+  | EVERY interval
+    [STARTS timestamp [+ INTERVAL interval] ...]
+    [ENDS timestamp [+ INTERVAL interval] ...]
+}
+
+interval:
+    quantity {YEAR | QUARTER | MONTH | DAY | HOUR | MINUTE |
+              WEEK | SECOND | YEAR_MONTH | DAY_HOUR | DAY_MINUTE |
+              DAY_SECOND | HOUR_MINUTE | HOUR_SECOND | MINUTE_SECOND}
+```
+
+```
+DELIMETER//
+
+CREATE EVENT IF NOT EXISTS auto_expire
+ON SCHEDULE EVERY 1 DAY
+START CURRENT_TIMESTAMP
+DO
+UPDATE MEDICATION
+SET MExpired = 1
+WHERE MExDate = CURDATE();
+
+DELIMETER;
+```
+
+### Khởi tạo bảng PROVIDER
+```
+CREATE TABLE PROVIDER
+(
+PrCode CHAR(9) PRIMARY KEY,
+PrName VARCHAR(20) NOT NULL UNIQUE,
+PrAddress VARCHAR(50),
+PrPhone DECIMAL(10, 0) ZEROFILL;
+);
+```
+
+Trong đó:
+* PrCode là mã định danh của nhà cung cấp, và là một chuỗi 9 ký tự. Lựa
+chọn kiểu dữ liệu **CHAR(9)**. Đồng thời PrCode cũng là **PRIMARY KEY** của bảng.
+* PrName là tên của nhà cung cấp, là một chuỗi bất kỳ có tối đa 20 ký tự. Lựa chọn kiểu dữ liệu **VARCHAR(20)**. Đồng thời ta yêu cầu nhà cung cấp phải có tên cụ thể - **NOT NULL** và độc nhất trong bảng – **UNIQUE**.
+* PrAddress là địa chỉ của nhà cung cấp, là một chuỗi bất kỳ tối đa 50 ký tự. Lựa chọn kiểu dữ liệu **VARCHAR(50)**.
+* PrPhone là số điện thoại của nhà cung cấp. Đây là một chuỗi 10 ký số và được thêm 0
+vào bên trái trong trường hợp chuỗi dưới 10 ký số. Vì vậy kiểu dữ liệu chọn là **DECIMAL(10, 0) ZEROFILL**.
+
+### Thêm dữ liệu vào bảng MEDICATION và PROVIDER
+```
+INSERT INTO MEDICATION
+VALUES ('000000000', 'Potion', '200', '2022-11-28', 1);
+INSERT INTO MEDICATION
+VALUES ('000000001', 'Super Potion', '600', '2023-07-30', 0);
+INSERT INTO MEDICATION
+VALUES ('000000002', 'Hyper Potion', '1200', '2024-12-31', 0);
+INSERT INTO MEDICATION
+VALUES ('000000003', 'Max Potion', '2000', '2030-08-31', 0);
+INSERT INTO PROVIDER
+VALUES ('000000000', 'Doraemon', 'Tokyo', '222222222');
+INSERT INTO PROVIDER
+VALUES ('000000001', 'Chopper Inc.', 'Drum', '333333333');
+INSERT INTO PROVIDER
+VALUES ('000000002', 'Mganga Medicine', 'Berlin', '444444444');
+INSERT INTO PROVIDER
+VALUES ('000000003', 'Doofenshmirtz Inc.', 'Danville', '555555555');
+```
+### Khởi tạo bảng PROVIDES
+```
+CREATE TABLE PROVIDES
+(
+PrCode CHAR(9) NOT NULL,
+MCode CHAR(9) NOT NULL,
+ProPrice NUMERIC(15,4),
+ProDate DATE,
+ProQuantity INT,
+PRIMARY KEY(PrCode,MCode),
+CONSTRAINT fk_pro_pr_prcode FOREIGN KEY(PrCode)
+REFERENCES PROVIDER(PrCode)
+ON DELETE CASCADE,
+CONSTRAINT fk_pro_med_mcode FOREIGN KEY(MCode)
+REFERENCES MEDICATION(MCode)
+ON DELETE CASCADE
+);
+```
+Trong đó:
+* PrCode là mã định danh của nhà cung cấp, tương tự như trường PrCode trong bảng
+PROVIDER. Ta yêu cầu trường này **NOT NULL**.
+* MCode là mã định danh của thuốc, tương tự như MCode trong bảng MEDICATION. Ta
+cũng yêu cầu trường này **NOT NULL**.
+* ProPrice là giá nhập thuốc. Vì là tiền nên lựa chọn kiểu dữ liệu số
+**NUMERIC(15, 4)**.
+* ProDate là ngày nhập thuốc. Vì là ngày nên lựa chọn kiểu dữ liệu **DATE**.
+* ProQuantity là số lượng nhập. Quy định trường này là kiểu **INT**.
+* **PRIMARY KEY** của bảng là tổ hợp (PrCode, MCode) trong đó PrCode là khóa ngoại tham
+khảo PrCode của bảng PROVIDER và MCode là khóa ngoại tham khảo MCode của bảng
+MEDICATION. Hai ràng buộc thực thi việc này là **fk_pro_pr_pcrcode** và
+**fk_pro_med_mcode**. Khi PrCode hay MCode tương ứng bị xóa thì tổ hợp tương ứng
+trong bảng PROVIDES cũng bị xóa theo – **ON DELETE CASCADE**.
+
+### Thêm giá trị vào bảng PROVIDES
+```
+INSERT INTO PROVIDES
+VALUES ('000000000', '000000000', '2000', '2022-01-01', 10);
+INSERT INTO PROVIDES
+VALUES ('000000001', '000000000', '2000', '2022-01-01', 10);
+INSERT INTO PROVIDES
+VALUES ('000000001', '000000003', '2000', '2022-01-01', 1);
+INSERT INTO PROVIDES
+VALUES ('000000003', '000000002', '24000', '2021-01-01', 20);
+```
+### Khởi tạo bảng MEDICATION_EFFECT
+```
+CREATE TABLE MEDICATION_EFFECT
+(
+MCode CHAR(9) NOT NULL,
+Effect VARCHAR(50) NOT NULL,
+PRIMARY KEY(MCode,Effect),
+CONSTRAINT fk_medef_med_mcode FOREIGN KEY(MCode)
+REFERENCES MEDICATION(MCode)
+ON DELETE CASCADE
+);
+```
+Trong đó:
+* MCode là mã định danh của thuốc, là một chuỗi 9 ký tự và NOT NULL. Do đó kiểu dữ
+liệu lựa chọn là **CHAR(9) NOT NULL**.
+* Effect là tác dụng của loại thuốc, là một chuỗi độ dài bất kỳ dưới 50 ký tự. Tác dụng của
+thuốc cũng phải NOT NULL. Lựa chọn kiểu dữ liệu **VARCHAR(50) NOT NULL**.
+* Tổ hợp (MCode, Effect) là **PRIMARY KEY** của bảng, trong đó MCode là khóa ngoại tham
+khảo đến MCode trong bảng MEDICATION. Ràng buộc này được thực thi bởi
+**CONSTRAINT fk_medef_med_mcode**. Nếu MCode tương ứng của thuốc trong bảng
+MEDICATION bị xóa, tổ hợp tương ứng thuộc MEDICATION_EFFECT cũng bị xóa theo –
+**ON DELETE CASCADE**.
+
+### Thêm dữ liệu vào bảng MEDICATION_EFFECT
+```
+INSERT INTO MEDICATION_EFFECT
+VALUES ('000000000', 'Heals 20HP');
+INSERT INTO MEDICATION_EFFECT
+VALUES ('000000001', 'Heals 50HP');
+INSERT INTO MEDICATION_EFFECT
+VALUES ('000000002', 'Heals 120HP');
+INSERT INTO MEDICATION_EFFECT
+VALUES ('000000003', 'Heals max HP');
+INSERT INTO MEDICATION_EFFECT
+VALUES ('000000000', 'May cause insomnia');
+```
+### Khởi tạo bảng TREATMENT
+```
+CREATE TABLE TREATMENT
+(
+PChar CHAR(2) NOT NULL,
+PNumber DECIMAL(9, 0) ZEROFILL NOT NULL,
+DocCode DECIMAL(9, 0) ZEROFILL NOT NULL,
+TrID INT PRIMARY KEY,
+TrSDate DATE,
+TrEDate DATE,
+TrResult VARCHAR(50),
+CONSTRAINT fk_treat_inp_pcode FOREIGN KEY(PChar, PNumber)
+REFERENCES INPATIENT(PChar, PNumber)
+ON DELETE CASCADE,
+CONSTRAINT fk_treat_doc_doccode FOREIGN KEY(DocCode)
+REFERENCES DOCTOR(ECode)
+ON DELETE NO ACTION,
+CONSTRAINT check_edate CHECK (TrEDate = NULL OR TrEDate >= TrSDate)
+);
+```
+Trong đó:
+* PChar là phần ký tự trong mã định danh bệnh nhân nội trú. Tương tự PChar trong
+INPATIENT, trường này là **CHAR(2) NOT NULL**.
+* PNumber là phần ký số trong mã định danh bệnh nhân nội trú. Tương tự PNumber trong
+INPATIENT, trường này là **DECIMAL(9, 0) ZEROFILL NOT NULL**.
+* DocCode là mã định danh của bác sĩ thực hiện điều trị. Tương tự ECode trong DOCTOR,
+trường này là **DECIMAL(9, 0) ZEROFILL**.
+* TrID là mã định danh của lần điều trị. Lựa chọn kiểu **INT** và cho TrID là
+**PRIMARY KEY** của bảng.
+* TrSDate là ngày bắt đầu chữa trị. Vì là ngày nên chọn lựa kiểu dữ liệu là **DATE**.
+* TrEDate là ngày chữa trị kết thúc. Vì là ngày nên chọn kiểu dữ liệu là **DAT**E.
+* TrResult là kết quả của lần chữa trị, là một chuỗi bất kỳ với độ dài dưới 50 ký tự. Do đó lựa chọn kiểu dữ liệu **VARCHAR(50)**.
+* Ta có tổ hợp (PChar, PNumber) là khóa ngoại tham khảo đến (PChar, Pnumber) thuộc
+INPATIENT và DocCode là khóa ngoại tham khảo đến ECode trong bảng DOCTOR. Hai
+ràng buộc này được thực thi lần lượt bởi **CONSTRAINT fk_treat_inp_pcode** và
+**CONSTRAINT fk_treat_doc_doccode**.
+* TrSDate phải là một ngày trước hoặc đúng với TrEDate. Ràng buộc này được thực thi bởi
+**CONSTRAINT edate_check**.
+
+### Tạo Trigger cho bảng TREATMENT
+Chúng ta cần tạo Trigger cho bản TREATMENT sao cho khi bác sĩ cập nhật TrResult thành
+‘Recovered’ thì bảng INPATIENT cũng thể hiện được bệnh nhân đã xuất viện.
+```
+DELIMETER//
+CREATE TRIGGER recovered AFTER UPDATE ON TREATMENT
+FOR EACH ROW BEGIN
+IF NEW.TrResult = 'Recovered' THEN
+UPDATE INPATIENT
+SET IPDisDate = CURDATE()
+WHERE NEW.PNumber = INPATIENT.PNumber;
+END IF;
+END//
+DELIMETER;
+```
+### Thêm dữ liệu vào bảng TREATMENT
+```
+INSERT INTO TREATMENT
+VALUES ('IP', 0, 0, 0, '2020-09-30', NULL, 'Not recovered');
+INSERT INTO TREATMENT
+VALUES ('IP', 0, 1, 1, '2021-09-30', NULL, 'Not recovered');
+INSERT INTO TREATMENT
+VALUES ('IP', 0, 2, 2, '2022-09-30', NULL, 'Not recovered');
+INSERT INTO TREATMENT
+VALUES ('IP', 3, 3, 3, '2020-05-30', NULL, 'Not recovered');
+```
+### Khởi tạo bảng IS_USED_TO_TREAT
+```
+CREATE TABLE IS_USED_TO_TREAT
+(
+TrID INT NOT NULL,
+MCode CHAR(9) NOT NULL,
+PRIMARY KEY(TrID,MCode),
+CONSTRAINT fk_iutt_treatment FOREIGN KEY(TrID)
+REFERENCES TREATMENT(TrID)
+ON DELETE CASCADE,
+CONSTRAINT fk_iutt_med_mcode FOREIGN KEY(MCode)
+REFERENCES MEDICATION(MCode)
+ON DELETE NO ACTION
+);
+```
+Trong đó:
+* TrID là mã định danh của buổi chữa trị, tương tự như TrID trong bảng TREATMENT, đây
+là một trường **INT NOT NULL**.
+• MCode là mã định danh của thuốc, tương tự như MCode trong bảng MEDICATION, đây
+là một trường **CHAR(9) NOT NULL**.
+• Tổ hợp (TrID, MCode) là PRIMARY KEY của bảng, với TrID là khóa ngoại tham khảo đến
+TrID của TREATMENT và MCode là khóa ngoại tham khảo đến MCode của MEDICATION.
+NếU TrID tương ứng trong TREATMENT bị xóa, tổ hợp trong IS_USED_TO_TREAT cũng sẽ bị xóa – **ON DELETE CASCADE**. Ngược lại, nếu MCode tương ứng trong MEDICATION bị
+xóa, tổ hợp trong IS_USED_TO_TREAT sẽ không bị ảnh hưởng – **ON DELETE NO ACTION**.
+### Thêm dữ liệu vào bảng IS_USED_TO_TREAT
+```
+INSERT INTO IS_USED_TO_TREAT
+VALUES (0, '000000000');
+INSERT INTO IS_USED_TO_TREAT
+VALUES (0,'000000001');
+INSERT INTO IS_USED_TO_TREAT
+VALUES (0, '000000002');
+INSERT INTO IS_USED_TO_TREAT
+VALUES (1, '000000000');
+INSERT INTO IS_USED_TO_TREAT
+VALUES (2, '000000000');
+INSERT INTO IS_USED_TO_TREAT
+VALUES (3, '000000000');
+```
+### Khởi tạo bảng EXAMINATION
+```
+CREATE TABLE EXAMINATION
+(
+PChar CHAR(2) NOT NULL,
+PNumber DECIMAL(9, 0) ZEROFILL NOT NULL,
+ExID INT PRIMARY KEY,
+ExDate DATE,
+ExNextDate DATE,
+ExFee NUMERIC(15,4),
+ExDiag VARCHAR(50),
+CONSTRAINT fk_exam_outp_pcode FOREIGN KEY(PChar, PNumber)
+REFERENCES OUTPATIENT(PChar, PNumber)
+ON DELETE CASCADE,
+CONSTRAINT check_exam_nextdate CHECK (ExNextDate > ExDate OR ExNextDay =
+NULL)
+);
+```
+Trong đó:
+* PChar là phần ký tự của mã định danh bệnh nhân tham gia vào buổi khám bệnh, tương
+tự với PChar trong bảng OUTPATIENT, giá trị này là **CHAR(2) NOT NULL**.
+* PNumber là phần ký số của mã định danh bệnh nhân tham gia vào buổi khám bệnh,
+tường tự với Pnumber trong bảng OUTPATIENT, giá trị này là **DECIMAL(9, 0) ZEROFILL
+NOT NULL**.
+* ExID là **PRIMARY KEY** của bảng, là kiểu dữ liệu **INT**.
+* ExDate là ngày khám bệnh. Vì là ngày nên kiểu dữ liệu là **DATE**.
+* ExNextDate là ngày khám nệnh tiếp theo. Vì là ngày nên kêu dữ liệu là **DATE**.
+* ExFee là phí khám bệnh. Vì là số tiền nên kiểu dữ liệu là **NUMERIC(15, 4)**.
+* ExDiag là chẩn đoán, có thể là một chuỗi bất kỳ trong dưới 51 ký tự. Do đó kiểu dữ liệu lựa chọn là **VARCHAR(50)**.
+* Ngoài ra, tổ hợp (PChar, Pnumber) là khóa ngoại tham khảo đến tổ hợp (PChar,
+Pnumber) của OUTPATIENT. Ràng buộc này được thực thi bởi **CONSTRAINT
+fk_exam_outp_code**.
+* **CONSTRAINT check_exam_nextdate** giúp chúng ta đảm bảo rằn ExNextDate hoặc sẽ là
+**NULL** (không cần tái khám) hoặc một ngày sau ExDate.
+### Thêm dữ liệu vào bảng EXAMINATION
+```
+INSERT INTO EXAMINATION
+VALUES ('OP', 0, 0, '2019-08-08', '2019-08-30', 1000, 'Viral fever');
+INSERT INTO EXAMINATION
+VALUES ('OP', 0, 1, '2019-08-30', NULL, 1000, 'Recovered');
+INSERT INTO EXAMINATION
+VALUES ('OP', 1, 0, '2020-11-05', NULL, 5000, 'Recovered');
+INSERT INTO EXAMINATION
+VALUES ('OP', 2, 0, '2022-11-10', '2022-12-31', 10000, 'Cancer');
+```
+### Khởi tạo bảng IS_USED_IN_EXAM
+```
+CREATE TABLE IS_USED_IN_EXAM
+(
+ExID INT NOT NULL,
+MCode CHAR(9) NOT NULL,
+PRIMARY KEY(ExID, MCode),
+CONSTRAINT fk_iuie_exam FOREIGN KEY(ExID)
+REFERENCES EXAMINATION(ExID)
+ON DELETE CASCADE,
+CONSTRAINT fk_iuie_med_mcode FOREIGN KEY(MCode)
+REFERENCES MEDICATION(MCode)
+ON DELETE NO ACTION
+);
+```
+Trong đó:
+* ExID là mã định danh của lần khám bệnh, tương tự như ExID trong EXAMINATION, là
+kiểu dữ liệu **INT NOT NULL**.
+* MCode là mã định danh của loại thuốc, tương tự như MCode trong MEDICATION, đây
+cũng là kiểu **CHAR(9) NOT NULL**.
+* Ngoài ra, tổ hợp (ExID, MCode) là **PRIMARY KEY**. Trong đó, ExID là khóa ngoại tham
+khảo đến ExID trong EXAMINATION, và MCode là khóa ngoại tham khảo đến MCode
+trong MEDICATION.
+* Khi ExID tương ứng trong EXAMINATION bị xóa đi, tổ hợp tương ứng trong
+IS_USED_IN_EXAM sẽ bị xóa – **ON DELETE CASCADE** trong **CONSTRAINT fk_iuie_exam**.
+* Khi MCode tương ứng trong MEDICATION bị xóa đi, tổ hợp tương ứng trong
+IS_USED_IN_EXAM sẽ vẫn giữ lại giá trị đã xóa – **ON DELETE NO ACTION** trong
+**CONSTRAINT fk_iuie_med_mcode**.
